@@ -56,7 +56,7 @@ Registration form
 def register():
   log.info(request.url)
   return template(request.app.config['mpcs.env.templates'] + 'register',
-    auth=auth, name="", email="", username="", 
+    auth=auth, name="", email="", username="",
     alert=False, success=True, error_message=None)
 
 @route('/register', method='POST', name="register_submit")
@@ -68,10 +68,10 @@ def register_submit():
                   email_addr=request.POST.get('email_address').strip(),
                   role="free_user")
   except Exception, error:
-    return template(request.app.config['mpcs.env.templates'] + 'register', 
-      auth=auth, alert=True, success=False, error_message=error)  
+    return template(request.app.config['mpcs.env.templates'] + 'register',
+      auth=auth, alert=True, success=False, error_message=error)
 
-  return template(request.app.config['mpcs.env.templates'] + 'register', 
+  return template(request.app.config['mpcs.env.templates'] + 'register',
     auth=auth, alert=True, success=True, error_message=None)
 
 @route('/register/<reg_code>', method='GET', name="register_confirm")
@@ -99,7 +99,7 @@ def login():
   if request.query.redirect_url.strip() != "":
     redirect_url = request.query.redirect_url
 
-  return template(request.app.config['mpcs.env.templates'] + 'login', 
+  return template(request.app.config['mpcs.env.templates'] + 'login',
     auth=auth, redirect_url=redirect_url, alert=False)
 
 @route('/login', method='POST', name="login_submit")
@@ -187,12 +187,13 @@ def upload_input_file():
   # NOTE: We also must inlcude "x-amz-security-token" since we're
   # using temporary credentials via instance roles
   policy_document = str({
-    "expiration": (datetime.datetime.utcnow() + 
+    "expiration": (datetime.datetime.utcnow() +
       datetime.timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "conditions": [
       {"bucket": bucket_name},
       ["starts-with","$key", key_name],
       ["starts-with", "$success_action_redirect", redirect_url],
+      #["content-length-range", 0, ],
       {"x-amz-server-side-encryption": encryption},
       {"x-amz-security-token": aws_session_token},
       {"acl": acl}]})
@@ -208,14 +209,14 @@ def upload_input_file():
   # (in addition to the AWS access key and signed policy from above)
   return template(request.app.config['mpcs.env.templates'] + 'upload',
     auth=auth, bucket_name=bucket_name, s3_key_name=key_name,
-    aws_access_key_id=aws_access_key_id,     
+    aws_access_key_id=aws_access_key_id,
     aws_session_token=aws_session_token, redirect_url=redirect_url,
     encryption=encryption, acl=acl, policy=policy, signature=signature)
 
 
 '''
 *******************************************************************************
-Accepts the S3 redirect GET request, parses it to extract 
+Accepts the S3 redirect GET request, parses it to extract
 required info, saves a job item to the database, and then
 publishes a notification for the annotator service.
 *******************************************************************************
@@ -226,7 +227,7 @@ def create_annotation_job_request():
   s3_key = str(request.query.key)
   prefix = str(request.app.config['mpcs.aws.s3.key_prefix'])
   matcher = re.search('.+/(.+)~(.+)', s3_key)
-  user = auth.current_user.username 
+  user = auth.current_user.username
   job_id = str(matcher.group(1))
   input_file_name = str(matcher.group(2))
   submit_time = int(time.time())
