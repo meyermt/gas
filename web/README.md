@@ -1,0 +1,2 @@
+# capstone-framework
+An enhanced web framework (based on [Bottle](https://bottlepy.org/docs/dev/)) for use in the capstone project. Adds basic user management, modular templates, and some simple styling based on [Bootstrap](http://getbootstrap.com/).
