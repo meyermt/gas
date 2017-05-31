@@ -159,7 +159,6 @@ def subscribe_submit():
     ann_table = dynamodb.Table(request.app.config['mpcs.aws.dynamodb.annotations_table'])
     query_results = ann_table.query(IndexName='username_index', KeyConditionExpression=Key('username').eq(auth.current_user.username))
     items = query_results['Items']
-    print ('did query and got' + str(items))
     glacier = boto3.client('glacier', region_name = request.app.config['mpcs.aws.app_region'])
     for item in items:
       if 'results_file_archive_id' in item:
@@ -168,9 +167,6 @@ def subscribe_submit():
           jobParameters = {'Type': 'archive-retrieval', 'SNSTopic': request.app.config['mpcs.aws.sns.archive_retrieve_topic'],
                          'ArchiveId': item['results_file_archive_id'], 'Tier': 'Expedited'}
         )
-	print ('sns is ' + request.app.config['mpcs.aws.sns.archive_retrieve_topic'])
-        print ('unarchiving ' + item['results_file_archive_id'])
-        print ('glacier response was ' + str(response))
   except stripe.error.CardError as e:
     body = e.json_body
     err  = body['error']
@@ -254,6 +250,12 @@ def upload_input_file():
   # Redirect to a route that will call the annotator
   redirect_url = str(request.url) + "/job"
 
+  if auth.current_user.role == 'free_user':
+    content_length = 150000
+  else:
+    # premium can go up to 10 MB
+    content_length = 10485760
+
   # Define the S3 policy doc to allow upload via form POST
   # The only required elements are "expiration", and "conditions"
   # must include "bucket", "key" and "acl"; other elements optional
@@ -266,7 +268,7 @@ def upload_input_file():
       {"bucket": bucket_name},
       ["starts-with","$key", key_name],
       ["starts-with", "$success_action_redirect", redirect_url],
-      #["content-length-range", 0, ],
+      ["content-length-range", 0, content_length],
       {"x-amz-server-side-encryption": encryption},
       {"x-amz-security-token": aws_session_token},
       {"acl": acl}]})
@@ -284,7 +286,8 @@ def upload_input_file():
     auth=auth, bucket_name=bucket_name, s3_key_name=key_name,
     aws_access_key_id=aws_access_key_id,
     aws_session_token=aws_session_token, redirect_url=redirect_url,
-    encryption=encryption, acl=acl, policy=policy, signature=signature)
+    encryption=encryption, acl=acl, policy=policy, signature=signature,
+    content_length=content_length)
 
 
 '''
