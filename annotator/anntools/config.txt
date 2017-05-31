@@ -1,0 +1,10 @@
+##
+# Specify in this order (one parameter per line):
+# host, user, password, database, port
+##
+
+anntools.c7opeeyykeju.us-east-1.rds.amazonaws.com
+annotator
+UbcpcU9t7yyKLQ
+annotator
+3306
