@@ -1,0 +1,15 @@
+#!/bin/bash -ex
+
+cd /home/ubuntu
+
+# Get the SSL certificate files
+sudo wget https://s3.amazonaws.com/mpcs-students/meyermt/mpcs.zip
+sudo unzip mpcs.zip
+sudo rm mpcs.zip
+
+# Change ownership from root
+sudo chown -R ubuntu:ubuntu /home/ubuntu/mpcs
+
+cd mpcs
+
+sudo -u ubuntu /home/ubuntu/mpcs/run_gas.sh &

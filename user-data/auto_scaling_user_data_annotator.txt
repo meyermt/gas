@@ -1,0 +1,15 @@
+#!/bin/bash -ex
+
+cd /home/ubuntu
+
+# Get the SSL certificate files
+sudo wget https://s3.amazonaws.com/mpcs-students/meyermt/gas_annotator.zip
+sudo unzip gas_annotator.zip
+sudo rm gas_annotator.zip
+
+# Change ownership from root
+sudo chown -R ubuntu:ubuntu /home/ubuntu/gas_annotator
+
+cd gas_annotator
+
+sudo -u ubuntu python /home/ubuntu/gas_annotator/jobs_runner.py &
