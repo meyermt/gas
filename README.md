@@ -3,13 +3,15 @@ Capstone GAS Project for Michael Meyer
 
 ## Where are the Files?
 
-**annotator** All source files used in the annotator instances
+**annotator/** All source files used in the annotator instances
 
-**web** All source files used in the web server instances
+**web/** All source files used in the web server instances
 
-**utilities** Utility processes for the GAS system (`results_notify.py`, `archiver.py`, `unarchiver.py`)
+**utilities/** Utility processes for the GAS system (`results_notify.py`, `archiver.py`, `unarchiver.py`)
 
-**test** Test script used to test annotator
+**test/** Test script used to test annotator
+
+**user-data/** User data used to start up annotator and web instances
 
 ## Approach to the Glacier Archiver Job
 
