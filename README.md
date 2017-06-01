@@ -39,3 +39,6 @@ Making sure premium users are guaranteed a good experience seemed like a good re
 6. Archive ID is removed from DynamoDB entry
 
 This approach effectively decouples to processes, the web app and the unarchiver, something that was much more important than in the archiving process. Because of the thawing time for these requests, it is much better to just use a queueing approach. Also, the decoupling allows us to more easily scale the unarchiving component separate from the web app component.
+
+
+![alt text](img/high-200.png "Lots of 200 Requests")
