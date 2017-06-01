@@ -58,6 +58,10 @@ Afterwards, I stopped the test and lowered the users and hatch rate considerably
 
 ![alt text](img/web-scale-down-locust.png "10 users and 5 hatch rate")
 
+This did lower the latency:
+
+![alt text](img/latency-lower.png "Lowered latency")
+
 This resulted in the scaling in of the web servers:
 
-![alt text](img/web-scale-in.png "Web servers shrinking")
+![alt text](img/web-scale-down.png "Web servers shrinking")
