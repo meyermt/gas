@@ -1,5 +1,15 @@
 # Capstone Project
-cp-meyermt created by GitHub Classroom
+Capstone GAS Project for Michael Meyer
+
+## Where are the Files?
+
+**annotator** All source files used in the annotator instances
+
+**web** All source files used in the web server instances
+
+**utilities** Utility processes for the GAS system (`results_notify.py`, `archiver.py`, `unarchiver.py`)
+
+**test** Test script used to test annotator
 
 ## Approach to the Glacier Archiver Job
 
