@@ -40,5 +40,24 @@ Making sure premium users are guaranteed a good experience seemed like a good re
 
 This approach effectively decouples to processes, the web app and the unarchiver, something that was much more important than in the archiving process. Because of the thawing time for these requests, it is much better to just use a queueing approach. Also, the decoupling allows us to more easily scale the unarchiving component separate from the web app component.
 
+## Web Server Load Testing
+
+I set my Locust testing to 200/20 for users/hatch rate and was able to see the web server instances scale out. You can see that there were plenty of reqs being sent per sec to achieve the alarm being alerted:
+
+![alt text](img/web-scale-up-locust.png "200 users and 20 hatch rate")
+
+The first sign of a successful scale out was the alarm being alerted, which made sense from viewing the amount of requests that were coming in (and being served a 200 response) over time:
 
 ![alt text](img/high-200.png "Lots of 200 Requests")
+
+I then viewed the scale out in the EC2 console:
+
+![alt text](img/web-scale-out.png "Web servers growing")
+
+Afterwards, I stopped the test and lowered the users and hatch rate considerably (I think maybe 10/5), in order to send in requests at a rate that could be served fast (in less than 10 ms):
+
+![alt text](img/web-scale-down-locust.png "10 users and 5 hatch rate")
+
+This resulted in the scaling in of the web servers:
+
+![alt text](img/web-scale-in.png "Web servers shrinking")
