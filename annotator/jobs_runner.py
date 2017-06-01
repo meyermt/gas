@@ -55,6 +55,8 @@ def main(argv=None):
 
                     message.delete()
                     print 'deleted job from queue'
+                else:
+                    message.delete()
 
 if __name__ == "__main__":
   sys.exit(main())
