@@ -12,7 +12,7 @@ def main(argv=None):
 
     while True:
 
-    	# this will bomb inside the annotators, but should work for our purposes to scale
+    	# this will bomb the req queue with tons of messages
     	client = boto3.client('sns', region_name=region)
   		client.publish(TopicArn=parser.get('mpcs.aws.sns', 'job_request_topic'), Message='load-test')
   		print 'wrote test message ' + str(ctr)

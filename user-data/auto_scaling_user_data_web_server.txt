@@ -2,7 +2,6 @@
 
 cd /home/ubuntu
 
-# Get the SSL certificate files
 sudo wget https://s3.amazonaws.com/mpcs-students/meyermt/mpcs.zip
 sudo unzip mpcs.zip
 sudo rm mpcs.zip

@@ -2,7 +2,6 @@
 
 cd /home/ubuntu
 
-# Get the SSL certificate files
 sudo wget https://s3.amazonaws.com/mpcs-students/meyermt/gas_annotator.zip
 sudo unzip gas_annotator.zip
 sudo rm gas_annotator.zip

@@ -143,30 +143,41 @@ def subscribe_submit():
   auth.require(fail_redirect='/login?redirect_url=' + request.url)
   token = request.POST.get('stripe_token')
   try:
+    # stripe doc on customers: https://stripe.com/docs/api#customers
     stripe.api_key = request.app.config['mpcs.stripe.secret_key']
     customerId = stripe.Customer.create(
       description = 'Customer for ' + auth.current_user.username,
       source = token,
       email = auth.current_user.email_addr
     )
-      
+    
+    # stripe doc on subscriptions: https://stripe.com/docs/api#subscriptions
     stripe.Subscription.create(
       customer=customerId,
       plan='premium_plan'
     )
     auth.current_user.update(role="premium_user")
-    dynamodb = boto3.resource('dynamodb', region_name=request.app.config['mpcs.aws.app_region']) 
-    ann_table = dynamodb.Table(request.app.config['mpcs.aws.dynamodb.annotations_table'])
-    query_results = ann_table.query(IndexName='username_index', KeyConditionExpression=Key('username').eq(auth.current_user.username))
-    items = query_results['Items']
-    glacier = boto3.client('glacier', region_name = request.app.config['mpcs.aws.app_region'])
-    for item in items:
-      if 'results_file_archive_id' in item:
-        response = glacier.initiate_job(
-          vaultName = request.app.config['mpcs.aws.glacier.vault'],
-          jobParameters = {'Type': 'archive-retrieval', 'SNSTopic': request.app.config['mpcs.aws.sns.archive_retrieve_topic'],
-                         'ArchiveId': item['results_file_archive_id'], 'Tier': 'Expedited'}
-        )
+    try:
+      dynamodb = boto3.resource('dynamodb', region_name=request.app.config['mpcs.aws.app_region']) 
+      ann_table = dynamodb.Table(request.app.config['mpcs.aws.dynamodb.annotations_table'])
+      query_results = ann_table.query(IndexName='username_index', KeyConditionExpression=Key('username').eq(auth.current_user.username))
+      items = query_results['Items']
+      # again, boto glacier doc: http://boto3.readthedocs.io/en/latest/reference/services/glacier.html#Glacier.Client.initiate_job
+      glacier = boto3.client('glacier', region_name = request.app.config['mpcs.aws.app_region'])
+      for item in items:
+        if 'results_file_archive_id' in item:
+          response = glacier.initiate_job(
+            vaultName = request.app.config['mpcs.aws.glacier.vault'],
+            jobParameters = {'Type': 'archive-retrieval', 'SNSTopic': request.app.config['mpcs.aws.sns.archive_retrieve_topic'],
+                           'ArchiveId': item['results_file_archive_id'], 'Tier': 'Expedited'}
+          )
+    except ClientError as e:
+      # Notification email should be sent to admin here
+      print "Unexpected error: %s" % e
+      raise
+  # stripe doc on error handling: https://stripe.com/docs/api#error_handling
+  # in real life, gotta do something more with these than just pass on, which is dumb
+  # this just showing that we may want to do something for each one of these
   except stripe.error.CardError as e:
     body = e.json_body
     err  = body['error']
@@ -309,12 +320,17 @@ def create_annotation_job_request():
   input_file_name = str(matcher.group(2))
   submit_time = int(time.time())
   user_email = auth.current_user.email_addr
-  data = {'job_id': job_id, 'username': user, 'input_file_name': input_file_name, 's3_inputs_bucket': bucket_name, 's3_key_input_file': s3_key, 'submit_time': submit_time, 'job_status': 'PENDING', 'user_email': user_email}
-  dynamodb = boto3.resource('dynamodb', region_name=request.app.config['mpcs.aws.app_region'])
-  ann_table = dynamodb.Table(request.app.config['mpcs.aws.dynamodb.annotations_table'])
-  ann_table.put_item(Item=data)
-  client = boto3.client('sns', region_name=request.app.config['mpcs.aws.app_region'])
-  client.publish(TopicArn=str(request.app.config['mpcs.aws.sns.job_request_topic']), Message=json.dumps(data))
+  try:
+    data = {'job_id': job_id, 'username': user, 'input_file_name': input_file_name, 's3_inputs_bucket': bucket_name, 's3_key_input_file': s3_key, 'submit_time': submit_time, 'job_status': 'PENDING', 'user_email': user_email}
+    dynamodb = boto3.resource('dynamodb', region_name=request.app.config['mpcs.aws.app_region'])
+    ann_table = dynamodb.Table(request.app.config['mpcs.aws.dynamodb.annotations_table'])
+    ann_table.put_item(Item=data)
+    client = boto3.client('sns', region_name=request.app.config['mpcs.aws.app_region'])
+    client.publish(TopicArn=str(request.app.config['mpcs.aws.sns.job_request_topic']), Message=json.dumps(data))
+  except ClientError as e:
+    # Notification email should be sent to admin here
+    print "Unexpected error: %s" % e
+    raise
   redirect_url = str('/annotations/' + job_id)
   redirect(redirect_url)
 
@@ -326,11 +342,16 @@ List all annotations for the user
 @route('/annotations', method='GET', name="annotations_list")
 def get_annotations_list():
   auth.require(fail_redirect='/login?redirect_url=' + request.url)
-  dynamodb = boto3.resource('dynamodb', region_name=request.app.config['mpcs.aws.app_region'])
-  ann_table = dynamodb.Table(request.app.config['mpcs.aws.dynamodb.annotations_table'])
-  query_results = ann_table.query(IndexName='username_index', KeyConditionExpression=Key('username').eq(auth.current_user.username))
-  items = query_results['Items']
-  link_url = '/annotate'
+  try:
+    dynamodb = boto3.resource('dynamodb', region_name=request.app.config['mpcs.aws.app_region'])
+    ann_table = dynamodb.Table(request.app.config['mpcs.aws.dynamodb.annotations_table'])
+    query_results = ann_table.query(IndexName='username_index', KeyConditionExpression=Key('username').eq(auth.current_user.username))
+    items = query_results['Items']
+    link_url = '/annotate'
+  except ClientError as e:
+    # Notification email should be sent to admin here
+    print "Unexpected error: %s" % e
+    raise
   return template(request.app.config['mpcs.env.templates'] + 'annotations',
   items=items, auth=auth, link_url=link_url)
 
@@ -342,18 +363,23 @@ Display details of a specific annotation job
 @route('/annotations/<job_id>', method='GET', name="annotation_details")
 def get_annotation_details(job_id):
   auth.require(fail_redirect='/login?redirect_url=' + request.url)
-  dynamodb = boto3.resource('dynamodb', region_name=request.app.config['mpcs.aws.app_region'])
-  ann_table = dynamodb.Table(request.app.config['mpcs.aws.dynamodb.annotations_table'])
-  query_result = ann_table.query(KeyConditionExpression=Key('job_id').eq(job_id))
-  job = query_result['Items'][0]
-  job_user = job['username']
-  request_time = time.ctime(job['submit_time'])
-  s3 = boto3.client('s3', region_name=request.app.config['mpcs.aws.app_region'])
-  if 's3_key_result_file' in job:
-    annot_url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': request.app.config['mpcs.aws.s3.results_bucket'], 
-					'Key': job['s3_key_result_file']})
-  else:
-    annot_url = 'N/A'
+  try:
+    dynamodb = boto3.resource('dynamodb', region_name=request.app.config['mpcs.aws.app_region'])
+    ann_table = dynamodb.Table(request.app.config['mpcs.aws.dynamodb.annotations_table'])
+    query_result = ann_table.query(KeyConditionExpression=Key('job_id').eq(job_id))
+    job = query_result['Items'][0]
+    job_user = job['username']
+    request_time = time.ctime(job['submit_time'])
+    s3 = boto3.client('s3', region_name=request.app.config['mpcs.aws.app_region'])
+    if 's3_key_result_file' in job:
+      annot_url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': request.app.config['mpcs.aws.s3.results_bucket'], 
+  					'Key': job['s3_key_result_file']})
+    else:
+      annot_url = 'N/A'
+  except ClientError as e:
+    # Notification email should be sent to admin here
+    print "Unexpected error: %s" % e
+    raise
   if 'complete_time' in job:
     complete_time = time.ctime(job['complete_time'])
     complete_int = job['complete_time']
