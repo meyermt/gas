@@ -4,6 +4,7 @@
 __author__ = 'Michael Meyer <meyermt@uchicago.edu>'
 
 import boto3
+import botocore
 import sys
 import json
 import uuid
@@ -31,12 +32,6 @@ def main(argv=None):
         smtp_url=parser.get('mpcs.auth', 'smtp_url'))
 
     tmp_dir = 'glacier-tmp/'
-
-    try:
-        os.makedirs(tmp_dir + parser.get('mpcs.aws.s3', 'key_prefix'))
-    except OSError as exc:
-        if exc.errno != errno.EEXIST:
-            raise
 
     # get system users
     users = auth.list_users()

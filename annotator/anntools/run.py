@@ -11,6 +11,7 @@ import re
 import shutil
 import os.path
 import json
+import botocore
 from boto3.dynamodb.conditions import Key
 from ConfigParser import SafeConfigParser
 

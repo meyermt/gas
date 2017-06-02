@@ -3,6 +3,7 @@
 __author__ = 'Michael Meyer <meyermt@uchicago.edu>'
 
 import boto3
+import botocore
 import sys
 import json
 import uuid

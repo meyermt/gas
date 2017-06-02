@@ -3,6 +3,7 @@
 __author__ = 'Michael Meyer <meyermt@uchicago.edu>'
 
 import boto3
+import botocore
 import sys
 import json
 import uuid
@@ -18,7 +19,7 @@ def main(argv=None):
     try:
         sqs = boto3.resource('sqs', region_name=region)
         queue = sqs.get_queue_by_name(QueueName=parser.get('mpcs.aws.sqs', 'job_results_queue'))
-        url = 'https://meyermt.ucmpcs.org:4433/annotations/'
+        url = 'https://meyermt.ucmpcs.org/annotations/'
     except ClientError as e:
         # Notification email should be sent to admin here
         print "Unexpected error: %s" % e

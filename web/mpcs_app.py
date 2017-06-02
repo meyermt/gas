@@ -21,6 +21,7 @@ import urlparse
 import uuid
 import boto3
 import botocore.session
+import botocore
 import re
 from boto3.dynamodb.conditions import Key, Attr
 
