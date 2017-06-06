@@ -65,3 +65,13 @@ This did lower the latency:
 This resulted in the scaling in of the web servers:
 
 ![alt text](img/web-scale-down.png "Web servers shrinking")
+
+## Ann Server Load Testing
+
+After much testing hardship (as is the nature of testing), I configured the alarm to scale after a SUM of 10 requests were received in a 5 minute period. Soon after that and kicking off a custom `test_ann.py` script (on the utilities node) that puts a message on my job request queue once every 5 seconds, I was able to see the alarm go off and then instance scale:
+
+![alt text](img/ann-scale-out-alarm.png "Ann alarm went off")
+
+![alt text](img/ann-scale-out-inst.png "Ann instances grow")
+
+

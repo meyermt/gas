@@ -33,7 +33,7 @@ def main(argv=None):
             print 'found a message!'
             for message in messages:
                 # built in for load testing
-                if json.loads(message.body)['Message'] != 'load-test':
+                if message.body != 'load-test':
                     msg_body = json.loads(json.loads(message.body)['Message'])
                     job_id = str(msg_body['job_id'])
                     print 'processing job: ' + job_id
